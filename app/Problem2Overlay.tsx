@@ -33,44 +33,51 @@ const Problem2Overlay = forwardRef<HTMLDivElement, Props>(function Problem2Overl
         position: 'absolute',
         top: '32px',
         left: '48px',
-        color: 'rgba(255,255,255,0.85)',
+        color: 'rgba(255,255,255,0.95)',
         fontSize: '18px',
         fontWeight: 700,
         letterSpacing: '0.15em',
         textTransform: 'uppercase',
         margin: 0,
+        textShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
       }}>
         The Problem
       </p>
       <div
         style={{
-          width: "min(88vw, 850px)",
-          padding: "2.5rem 3rem",
-          background: "rgba(255, 255, 255, 0.92)",
-          borderRadius: "20px",
-          boxShadow: "0 10px 50px rgba(0,0,0,0.15)",
+          width: "min(88vw, 900px)",
+          padding: "3rem 3.5rem",
+          background: "linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(240, 249, 255, 0.92) 100%)",
+          backdropFilter: "blur(20px)",
+          borderRadius: "24px",
+          border: "2px solid rgba(30, 58, 138, 0.15)",
+          boxShadow: "0 20px 60px rgba(0,0,0,0.18), 0 4px 16px rgba(6, 182, 212, 0.1)",
         }}
       >
         {/* Title */}
         <h2
           style={{
-            fontSize: "1.6rem",
-            fontWeight: 700,
-            color: "#0f172a",
+            fontSize: "2rem",
+            fontWeight: 800,
+            background: "linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            backgroundClip: "text",
             textAlign: "center",
-            margin: "0 0 0.4rem 0",
-            letterSpacing: "-0.02em",
+            margin: "0 0 0.6rem 0",
+            letterSpacing: "-0.03em",
           }}
         >
           The invisible gap in recovery
         </h2>
         <p
           style={{
-            fontSize: "0.85rem",
-            color: "#334155",
+            fontSize: "0.95rem",
+            color: "#475569",
             textAlign: "center",
-            margin: "0 0 2rem 0",
-            lineHeight: 1.5,
+            margin: "0 0 2.5rem 0",
+            lineHeight: 1.6,
+            fontWeight: 600,
           }}
         >
           Recovery happens every day. But most of it goes unmeasured.

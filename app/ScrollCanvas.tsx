@@ -148,6 +148,10 @@ export default function ScrollCanvas() {
 
   const [loaded, setLoaded] = useState(false);
   const [loadedCount, setLoadedCount] = useState(0);
+  const [askAmount, setAskAmount] = useState(0);
+  const [hasAnimatedAsk, setHasAnimatedAsk] = useState(false);
+  const [typewriterText, setTypewriterText] = useState("");
+  const [hasAnimatedTypewriter, setHasAnimatedTypewriter] = useState(false);
 
   const snapFrames = [1, 95, 225, 350, 483, 616, 720];
 
@@ -234,6 +238,102 @@ export default function ScrollCanvas() {
     loadBatch(0);
     return () => { cancelled = true; };
   }, []);
+
+  // Typewriter effect for "What if" section (letter by letter)
+  useEffect(() => {
+    const handleScroll = () => {
+      if (hasAnimatedTypewriter) return;
+
+      const SCROLL_CONTAINER_HEIGHT = 30471;
+      const whatIfFrame = 225;
+      const whatIfScrollPos = (whatIfFrame / (TOTAL_FRAMES - 1)) * SCROLL_CONTAINER_HEIGHT;
+
+      const scrollY = window.scrollY;
+
+      // Check if we're near the What If frame
+      if (Math.abs(scrollY - whatIfScrollPos) < window.innerHeight * 0.3) {
+        setHasAnimatedTypewriter(true);
+
+        const fullText = "What if there was a solution for this gap?";
+        let currentIndex = 0;
+
+        const typeNextChar = () => {
+          if (currentIndex <= fullText.length) {
+            setTypewriterText(fullText.slice(0, currentIndex));
+            currentIndex++;
+
+            // Variable speed for more realistic typing (faster for regular chars, slower for spaces and punctuation)
+            const char = fullText[currentIndex - 1];
+            let delay = 40; // Base speed
+
+            if (char === ' ') {
+              delay = 80; // Pause at spaces
+            } else if (char === '?' || char === '.' || char === ',') {
+              delay = 200; // Longer pause at punctuation
+            } else {
+              // Add slight randomness for human-like typing
+              delay = 40 + Math.random() * 40; // 40-80ms
+            }
+
+            setTimeout(typeNextChar, delay);
+          }
+        };
+
+        typeNextChar();
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    handleScroll();
+
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [hasAnimatedTypewriter]);
+
+  // Animated counter for The Ask section
+  useEffect(() => {
+    const handleScroll = () => {
+      if (hasAnimatedAsk) return;
+
+      const SCROLL_CONTAINER_HEIGHT = 30471;
+      const teamSectionHeight = window.innerHeight; // TEAM section
+      const ASK_SECTION_START = SCROLL_CONTAINER_HEIGHT + teamSectionHeight + 200;
+
+      const scrollY = window.scrollY;
+
+      // Check if we've scrolled into The Ask section
+      if (scrollY >= ASK_SECTION_START - window.innerHeight * 0.6) {
+        setHasAnimatedAsk(true);
+
+        // Animate counter from 0 to 500000
+        const duration = 1800; // 1.8 seconds
+        const startTime = Date.now();
+
+        const animate = () => {
+          const elapsed = Date.now() - startTime;
+          const progress = Math.min(elapsed / duration, 1);
+
+          // Easing function for smooth deceleration (ease-out cubic)
+          const easeOut = 1 - Math.pow(1 - progress, 4);
+          const current = Math.floor(easeOut * 500000);
+
+          setAskAmount(current);
+
+          if (progress < 1) {
+            requestAnimationFrame(animate);
+          } else {
+            setAskAmount(500000); // Ensure we end exactly at 500000
+          }
+        };
+
+        animate();
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    handleScroll(); // Check immediately in case already scrolled
+
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [hasAnimatedAsk]);
 
   // Scroll lock system
   useEffect(() => {
@@ -593,7 +693,7 @@ export default function ScrollCanvas() {
       {/* TEAM */}
       <section
         style={{
-          backgroundColor: "#000000",
+          background: "linear-gradient(180deg, #FFFFFF 0%, #f8fafc 100%)",
           width: "100%",
           minHeight: "100vh",
           display: "flex",
@@ -601,7 +701,7 @@ export default function ScrollCanvas() {
           justifyContent: "center",
           alignItems: "center",
           padding: "clamp(2rem, 5vw, 5rem)",
-          gap: "clamp(1.5rem, 3vw, 2.5rem)",
+          gap: "clamp(2rem, 4vw, 3rem)",
           position: "relative",
           zIndex: 30,
           fontFamily: "var(--font-geist-sans)",
@@ -611,25 +711,32 @@ export default function ScrollCanvas() {
           style={{
             display: "inline-flex",
             alignItems: "center",
-            gap: "8px",
-            border: "1px solid rgba(0,255,255,0.3)",
+            gap: "10px",
+            background: "linear-gradient(135deg, rgba(6, 182, 212, 0.12) 0%, rgba(30, 58, 138, 0.08) 100%)",
+            backdropFilter: "blur(10px)",
+            border: "2px solid rgba(6, 182, 212, 0.3)",
             borderRadius: "999px",
-            padding: "8px 16px",
+            padding: "10px 20px",
+            boxShadow: "0 4px 16px rgba(6, 182, 212, 0.15)",
           }}
         >
           <div
             style={{
-              width: "6px",
-              height: "6px",
+              width: "8px",
+              height: "8px",
               borderRadius: "50%",
-              backgroundColor: "#00FFFF",
+              background: "linear-gradient(135deg, #06b6d4 0%, #1e3a8a 100%)",
+              boxShadow: "0 0 12px rgba(6, 182, 212, 0.5)",
             }}
           />
           <span
             style={{
-              color: "#00FFFF",
-              fontSize: "clamp(11px, 1.2vw, 14px)",
-              fontWeight: 600,
+              background: "linear-gradient(135deg, #0c4a6e 0%, #1e3a8a 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+              fontSize: "clamp(12px, 1.3vw, 15px)",
+              fontWeight: 800,
               letterSpacing: "0.15em",
               textTransform: "uppercase",
             }}
@@ -641,10 +748,12 @@ export default function ScrollCanvas() {
         <div
           style={{
             width: "100%",
-            maxWidth: "900px",
-            height: "clamp(200px, 35vh, 380px)",
-            borderRadius: "12px",
+            maxWidth: "950px",
+            height: "clamp(220px, 38vh, 420px)",
+            borderRadius: "24px",
             overflow: "hidden",
+            border: "3px solid rgba(30, 58, 138, 0.12)",
+            boxShadow: "0 20px 60px rgba(15, 23, 42, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.5)",
           }}
         >
           <img
@@ -662,32 +771,60 @@ export default function ScrollCanvas() {
         <div
           style={{
             width: "100%",
-            maxWidth: "900px",
+            maxWidth: "950px",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            gap: "clamp(1rem, 2vw, 1.5rem)",
+            gap: "clamp(1.5rem, 2.5vw, 2rem)",
           }}
         >
-          <div style={{ display: "flex", gap: "clamp(1.5rem, 4vw, 3rem)", alignItems: "center", justifyContent: "center", flexWrap: "wrap" }}>
-            <p style={{ fontSize: "clamp(0.9rem, 1.8vw, 1.4rem)", fontWeight: 700, margin: 0 }}>
-              <span style={{ color: "#00FFFF" }}>Software</span>{" "}
-              <span style={{ color: "#FFFFFF" }}>engineering</span>
-            </p>
-            <p style={{ fontSize: "clamp(0.9rem, 1.8vw, 1.4rem)", fontWeight: 700, margin: 0 }}>
-              <span style={{ color: "#00FFFF" }}>Biomedical</span>{" "}
-              <span style={{ color: "#FFFFFF" }}>engineering</span>
-            </p>
-            <p style={{ fontSize: "clamp(0.9rem, 1.8vw, 1.4rem)", fontWeight: 700, margin: 0 }}>
-              <span style={{ color: "#FFFFFF" }}>Active</span>{" "}
-              <span style={{ color: "#00FFFF" }}>physician</span>
-            </p>
+          <div style={{ display: "flex", gap: "clamp(2rem, 5vw, 4rem)", alignItems: "center", justifyContent: "center", flexWrap: "wrap" }}>
+            {[
+              { highlight: "Software", normal: "engineering" },
+              { highlight: "Biomedical", normal: "engineering" },
+              { highlight: "Active", normal: "physician" }
+            ].map((item, idx) => (
+              <div
+                key={idx}
+                style={{
+                  background: "linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(240, 249, 255, 0.8) 100%)",
+                  backdropFilter: "blur(10px)",
+                  border: "2px solid rgba(30, 58, 138, 0.1)",
+                  borderRadius: "16px",
+                  padding: "12px 24px",
+                  boxShadow: "0 4px 16px rgba(15, 23, 42, 0.08)",
+                }}
+              >
+                <p style={{ fontSize: "clamp(1rem, 2vw, 1.5rem)", fontWeight: 800, margin: 0, whiteSpace: "nowrap" }}>
+                  <span style={{
+                    background: "linear-gradient(135deg, #06b6d4 0%, #0e7490 100%)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    backgroundClip: "text",
+                  }}>{item.highlight || item.normal}</span>
+                  {item.highlight && item.normal && " "}
+                  {item.highlight && <span style={{ color: "#0f172a" }}>{item.normal}</span>}
+                </p>
+              </div>
+            ))}
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <img src="/spain.png" alt="Spain" style={{ height: "clamp(20px, 2.5vw, 30px)", width: "auto", objectFit: "contain" }} />
-            <img src="/usa.png" alt="USA" style={{ height: "clamp(20px, 2.5vw, 30px)", width: "auto", objectFit: "contain" }} />
-            <img src="/HSIL.png" alt="Harvard HSIL" style={{ height: "clamp(20px, 2.5vw, 30px)", width: "auto", objectFit: "contain" }} />
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "20px",
+              padding: "16px 28px",
+              background: "linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(240, 249, 255, 0.8) 100%)",
+              backdropFilter: "blur(10px)",
+              borderRadius: "16px",
+              border: "2px solid rgba(30, 58, 138, 0.1)",
+              boxShadow: "0 4px 16px rgba(15, 23, 42, 0.08)",
+            }}
+          >
+            <img src="/spain.png" alt="Spain" style={{ height: "clamp(24px, 3vw, 36px)", width: "auto", objectFit: "contain", filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.1))" }} />
+            <img src="/usa.png" alt="USA" style={{ height: "clamp(24px, 3vw, 36px)", width: "auto", objectFit: "contain", filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.1))" }} />
+            <img src="/HSIL.png" alt="Harvard HSIL" style={{ height: "clamp(24px, 3vw, 36px)", width: "auto", objectFit: "contain", filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.1))" }} />
           </div>
         </div>
       </section>
@@ -695,15 +832,15 @@ export default function ScrollCanvas() {
       {/* THE ASK */}
       <section
         style={{
-          backgroundColor: "#000000",
+          background: "linear-gradient(180deg, #f8fafc 0%, #FFFFFF 50%, #f0f9ff 100%)",
           width: "100%",
           minHeight: "100vh",
           display: "flex",
           flexDirection: "column",
           justifyContent: "center",
           alignItems: "center",
-          padding: "clamp(2rem, 5vw, 5rem)",
-          gap: "clamp(1.5rem, 3vw, 3rem)",
+          padding: "clamp(3rem, 6vw, 6rem)",
+          gap: "clamp(2rem, 4vw, 4rem)",
           position: "relative",
           zIndex: 30,
           fontFamily: "var(--font-geist-sans)",
@@ -713,18 +850,30 @@ export default function ScrollCanvas() {
           style={{
             display: "inline-flex",
             alignItems: "center",
-            gap: "8px",
-            border: "1px solid rgba(0,255,255,0.3)",
+            gap: "10px",
+            background: "linear-gradient(135deg, rgba(6, 182, 212, 0.12) 0%, rgba(30, 58, 138, 0.08) 100%)",
+            backdropFilter: "blur(10px)",
+            border: "2px solid rgba(6, 182, 212, 0.3)",
             borderRadius: "999px",
-            padding: "6px 14px",
+            padding: "10px 20px",
+            boxShadow: "0 4px 16px rgba(6, 182, 212, 0.15)",
           }}
         >
-          <div style={{ width: "6px", height: "6px", borderRadius: "50%", backgroundColor: "#00FFFF" }} />
+          <div style={{
+            width: "8px",
+            height: "8px",
+            borderRadius: "50%",
+            background: "linear-gradient(135deg, #06b6d4 0%, #1e3a8a 100%)",
+            boxShadow: "0 0 12px rgba(6, 182, 212, 0.5)",
+          }} />
           <span
             style={{
-              color: "#00FFFF",
-              fontSize: "clamp(10px, 1.2vw, 12px)",
-              fontWeight: 600,
+              background: "linear-gradient(135deg, #0c4a6e 0%, #1e3a8a 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+              fontSize: "clamp(11px, 1.3vw, 14px)",
+              fontWeight: 800,
               letterSpacing: "0.15em",
               textTransform: "uppercase",
             }}
@@ -733,52 +882,84 @@ export default function ScrollCanvas() {
           </span>
         </div>
 
-        <h2
+        <div
           style={{
-            color: "#00FFFF",
-            fontSize: "clamp(3rem, 8vw, 6rem)",
-            fontWeight: 800,
-            lineHeight: 1,
-            letterSpacing: "-0.03em",
-            margin: 0,
-            textAlign: "center",
+            background: "linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(240, 249, 255, 0.9) 100%)",
+            backdropFilter: "blur(20px)",
+            borderRadius: "32px",
+            padding: "clamp(2rem, 4vw, 3.5rem) clamp(2.5rem, 5vw, 4rem)",
+            border: "3px solid rgba(30, 58, 138, 0.15)",
+            boxShadow: "0 24px 72px rgba(15, 23, 42, 0.12), 0 0 0 1px rgba(255, 255, 255, 0.8)",
+            position: "relative",
+            overflow: "hidden",
           }}
         >
-          $500,000
-        </h2>
+          {/* Decorative top border */}
+          <div
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              height: "4px",
+              background: "linear-gradient(90deg, #06b6d4 0%, #1e3a8a 50%, #06b6d4 100%)",
+            }}
+          />
 
-        <div style={{ display: "flex", flexDirection: "column", gap: "6px", alignItems: "center" }}>
-          <p
+          <h2
             style={{
-              color: "#00FFFF",
-              fontSize: "clamp(1rem, 2vw, 1.4rem)",
-              fontWeight: 600,
-              margin: 0,
+              background: "linear-gradient(135deg, #0f172a 0%, #1e3a8a 60%, #06b6d4 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+              fontSize: "clamp(3.5rem, 9vw, 7rem)",
+              fontWeight: 900,
+              lineHeight: 1,
+              letterSpacing: "-0.04em",
+              margin: "0 0 1.5rem 0",
               textAlign: "center",
+              transition: "transform 0.1s ease",
             }}
           >
-            Pre-seed.
-          </p>
-          <p
-            style={{
-              color: "rgba(255,255,255,0.4)",
-              fontSize: "clamp(0.85rem, 1.5vw, 1.1rem)",
-              fontWeight: 400,
-              margin: 0,
-              textAlign: "center",
-            }}
-          >
-            SAFE or convertible note.
-          </p>
+            ${askAmount.toLocaleString()}
+          </h2>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px", alignItems: "center", marginBottom: "2rem" }}>
+            <p
+              style={{
+                background: "linear-gradient(135deg, #0c4a6e 0%, #1e3a8a 100%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+                fontSize: "clamp(1.1rem, 2.2vw, 1.6rem)",
+                fontWeight: 800,
+                margin: 0,
+                textAlign: "center",
+              }}
+            >
+              Pre-seed.
+            </p>
+            <p
+              style={{
+                color: "#475569",
+                fontSize: "clamp(0.95rem, 1.6vw, 1.2rem)",
+                fontWeight: 600,
+                margin: 0,
+                textAlign: "center",
+              }}
+            >
+              SAFE or convertible note.
+            </p>
+          </div>
         </div>
 
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "1fr 1fr 1fr",
-            gap: "clamp(10px, 1.5vw, 16px)",
+            gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+            gap: "clamp(16px, 2vw, 24px)",
             width: "100%",
-            maxWidth: "800px",
+            maxWidth: "950px",
           }}
         >
           {[
@@ -789,20 +970,48 @@ export default function ScrollCanvas() {
             <div
               key={item.number}
               style={{
-                backgroundColor: "#0A0A0A",
-                border: "1px solid rgba(255,255,255,0.08)",
-                borderRadius: "16px",
-                padding: "clamp(1.5rem, 3vw, 3rem) clamp(1rem, 2vw, 2.5rem)",
+                background: "linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(240, 249, 255, 0.85) 100%)",
+                backdropFilter: "blur(15px)",
+                border: "2px solid rgba(30, 58, 138, 0.15)",
+                borderRadius: "24px",
+                padding: "clamp(2rem, 3.5vw, 3.5rem) clamp(1.5rem, 2.5vw, 3rem)",
                 display: "flex",
                 flexDirection: "column",
-                gap: "16px",
+                gap: "20px",
+                boxShadow: "0 8px 32px rgba(15, 23, 42, 0.1)",
+                position: "relative",
+                overflow: "hidden",
+                transition: "transform 0.3s ease, box-shadow 0.3s ease",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "translateY(-4px)";
+                e.currentTarget.style.boxShadow = "0 16px 48px rgba(6, 182, 212, 0.15)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "translateY(0)";
+                e.currentTarget.style.boxShadow = "0 8px 32px rgba(15, 23, 42, 0.1)";
               }}
             >
+              {/* Decorative corner accent */}
+              <div
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  right: 0,
+                  width: "60px",
+                  height: "60px",
+                  background: "linear-gradient(135deg, rgba(6, 182, 212, 0.08) 0%, transparent 100%)",
+                  borderRadius: "0 0 0 100%",
+                }}
+              />
               <span
                 style={{
-                  color: "#00FFFF",
-                  fontSize: "clamp(14px, 1.5vw, 18px)",
-                  fontWeight: 700,
+                  background: "linear-gradient(135deg, #06b6d4 0%, #0e7490 100%)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                  fontSize: "clamp(16px, 1.8vw, 22px)",
+                  fontWeight: 900,
                   letterSpacing: "0.1em",
                   textAlign: "center",
                 }}
@@ -811,9 +1020,9 @@ export default function ScrollCanvas() {
               </span>
               <h3
                 style={{
-                  color: "#FFFFFF",
-                  fontSize: "clamp(0.95rem, 1.5vw, 1.3rem)",
-                  fontWeight: 700,
+                  color: "#0f172a",
+                  fontSize: "clamp(1.05rem, 1.7vw, 1.45rem)",
+                  fontWeight: 800,
                   margin: 0,
                   lineHeight: 1.3,
                   textAlign: "center",
@@ -829,37 +1038,52 @@ export default function ScrollCanvas() {
       {/* CIERRE */}
       <section
         style={{
-          backgroundColor: "#000000",
+          background: "linear-gradient(180deg, #f0f9ff 0%, #FFFFFF 50%, #f8fafc 100%)",
           width: "100%",
           minHeight: "100vh",
           display: "flex",
           flexDirection: "column",
           justifyContent: "center",
           alignItems: "center",
-          padding: "clamp(2rem, 5vw, 5rem)",
-          gap: "clamp(1.5rem, 3vw, 3rem)",
+          padding: "clamp(3rem, 6vw, 6rem)",
+          gap: "clamp(2rem, 4vw, 3.5rem)",
           position: "relative",
           zIndex: 30,
           fontFamily: "var(--font-geist-sans)",
         }}
       >
-        <img
-          src="/logo.png"
-          alt="FixedGap"
+        <div
           style={{
-            height: "clamp(100px, 18vw, 220px)",
-            width: "auto",
-            objectFit: "contain",
+            background: "linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(240, 249, 255, 0.85) 100%)",
+            backdropFilter: "blur(20px)",
+            borderRadius: "32px",
+            padding: "clamp(2rem, 4vw, 3rem)",
+            border: "3px solid rgba(30, 58, 138, 0.12)",
+            boxShadow: "0 20px 60px rgba(15, 23, 42, 0.1)",
           }}
-        />
+        >
+          <img
+            src="/fix.png"
+            alt="FixedGap"
+            style={{
+              height: "clamp(120px, 20vw, 260px)",
+              width: "auto",
+              objectFit: "contain",
+              filter: "drop-shadow(0 4px 12px rgba(15, 23, 42, 0.15))",
+            }}
+          />
+        </div>
 
         <h2
           style={{
-            color: "#FFFFFF",
-            fontSize: "clamp(1.5rem, 3vw, 2.5rem)",
-            fontWeight: 800,
+            background: "linear-gradient(135deg, #0f172a 0%, #1e3a8a 80%, #06b6d4 100%)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            backgroundClip: "text",
+            fontSize: "clamp(2rem, 4vw, 3.5rem)",
+            fontWeight: 900,
             margin: 0,
-            letterSpacing: "-0.03em",
+            letterSpacing: "-0.04em",
           }}
         >
           FixedGap
@@ -870,59 +1094,75 @@ export default function ScrollCanvas() {
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            gap: "6px",
+            gap: "12px",
             textAlign: "center",
+            maxWidth: "900px",
           }}
         >
           <p
             style={{
-              color: "#FFFFFF",
-              fontSize: "clamp(1.2rem, 2.8vw, 2.2rem)",
-              fontWeight: 700,
+              color: "#0f172a",
+              fontSize: "clamp(1.5rem, 3.5vw, 2.8rem)",
+              fontWeight: 800,
               margin: 0,
               lineHeight: 1.2,
-              letterSpacing: "-0.02em",
+              letterSpacing: "-0.03em",
             }}
           >
             Recovery happens every day.
           </p>
           <p
             style={{
-              color: "#00FFFF",
-              fontSize: "clamp(1.2rem, 2.8vw, 2.2rem)",
-              fontWeight: 700,
+              background: "linear-gradient(135deg, #06b6d4 0%, #0e7490 50%, #1e3a8a 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+              fontSize: "clamp(1.5rem, 3.5vw, 2.8rem)",
+              fontWeight: 800,
               margin: 0,
               lineHeight: 1.2,
-              letterSpacing: "-0.02em",
+              letterSpacing: "-0.03em",
             }}
           >
             Clinical insight should too.
           </p>
         </div>
 
-        <button
+        <a
+          href="https://www.youtube.com/watch?v=qyoTG4PWM8c"
+          target="_blank"
+          rel="noopener noreferrer"
           style={{
-            backgroundColor: "#FFFFFF",
-            color: "#000000",
-            fontSize: "clamp(14px, 1.5vw, 18px)",
-            fontWeight: 700,
-            padding: "clamp(10px, 1.5vw, 16px) clamp(28px, 4vw, 48px)",
-            borderRadius: "10px",
-            border: "none",
-            cursor: "pointer",
-            transition: "transform 0.2s ease, box-shadow 0.2s ease",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = "translateY(-2px)";
-            e.currentTarget.style.boxShadow = "0 8px 24px rgba(255,255,255,0.2)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = "translateY(0)";
-            e.currentTarget.style.boxShadow = "none";
+            textDecoration: "none",
           }}
         >
-          Watch demo
-        </button>
+          <button
+            style={{
+              background: "linear-gradient(135deg, #0f172a 0%, #1e3a8a 80%, #0e7490 100%)",
+              color: "#FFFFFF",
+              fontSize: "clamp(16px, 1.8vw, 22px)",
+              fontWeight: 800,
+              padding: "clamp(14px, 2vw, 22px) clamp(40px, 6vw, 72px)",
+              borderRadius: "16px",
+              border: "3px solid rgba(6, 182, 212, 0.3)",
+              cursor: "pointer",
+              transition: "transform 0.3s ease, box-shadow 0.3s ease",
+              boxShadow: "0 8px 32px rgba(30, 58, 138, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.8)",
+              position: "relative",
+              overflow: "hidden",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = "translateY(-4px) scale(1.02)";
+              e.currentTarget.style.boxShadow = "0 16px 48px rgba(6, 182, 212, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.9)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "translateY(0) scale(1)";
+              e.currentTarget.style.boxShadow = "0 8px 32px rgba(30, 58, 138, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.8)";
+            }}
+          >
+            Watch demo
+          </button>
+        </a>
       </section>
 
       {/* Pitch deck text overlays */}
@@ -999,24 +1239,28 @@ export default function ScrollCanvas() {
             fontFamily: "var(--font-geist-sans)",
           }}
         >
-            {sectionTitle("The Problem", "rgba(255,255,255,0.85)")}
+            {sectionTitle("The Problem", "rgba(255,255,255,0.95)")}
             {/* Badge pill */}
             <div
               style={{
                 display: "inline-flex",
                 alignItems: "center",
-                border: "2px solid rgba(255,255,255,0.35)",
+                background: "linear-gradient(135deg, rgba(6, 182, 212, 0.15) 0%, rgba(14, 116, 144, 0.12) 100%)",
+                backdropFilter: "blur(10px)",
+                border: "2px solid rgba(6, 182, 212, 0.4)",
                 borderRadius: "999px",
-                padding: "10px 24px",
+                padding: "12px 28px",
                 marginBottom: "2.5rem",
+                boxShadow: "0 4px 16px rgba(6, 182, 212, 0.2), 0 0 32px rgba(6, 182, 212, 0.1)",
               }}
             >
               <span
                 style={{
-                  color: "rgba(255,255,255,0.9)",
-                  fontSize: "1rem",
-                  fontWeight: 600,
-                  letterSpacing: "0.02em",
+                  color: "#FFFFFF",
+                  fontSize: "1.05rem",
+                  fontWeight: 700,
+                  letterSpacing: "0.03em",
+                  textShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
                 }}
               >
                 2 seconds = 1 stroke
@@ -1027,7 +1271,7 @@ export default function ScrollCanvas() {
             <div
               style={{
                 display: "flex",
-                gap: "3rem",
+                gap: "4rem",
                 alignItems: "flex-end",
               }}
             >
@@ -1035,25 +1279,30 @@ export default function ScrollCanvas() {
                 <p
                   style={{
                     color: "#FFFFFF",
-                    fontSize: "clamp(4.5rem, 8vw, 7.5rem)",
+                    fontSize: "clamp(4.8rem, 9vw, 8rem)",
                     fontWeight: 900,
-                    lineHeight: 0.95,
-                    letterSpacing: "-0.04em",
+                    lineHeight: 0.9,
+                    letterSpacing: "-0.05em",
                     margin: 0,
+                    textShadow: "0 4px 24px rgba(0, 0, 0, 0.4), 0 0 48px rgba(6, 182, 212, 0.2)",
                   }}
                 >
                   12.2M
                 </p>
                 <p
                   style={{
-                    color: "rgba(255,255,255,0.7)",
-                    fontSize: "1.2rem",
-                    fontWeight: 400,
-                    marginTop: "0.75rem",
-                    fontStyle: "italic",
+                    color: "rgba(255,255,255,0.85)",
+                    fontSize: "1.3rem",
+                    fontWeight: 500,
+                    marginTop: "0.85rem",
+                    textShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
                   }}
                 >
-                  strokes every <span style={{ color: "#22d3ee", fontStyle: "italic" }}>year</span>
+                  strokes every <span style={{
+                    color: "#06b6d4",
+                    fontWeight: 700,
+                    textShadow: "0 0 16px rgba(6, 182, 212, 0.6)",
+                  }}>year</span>
                 </p>
               </div>
 
@@ -1061,25 +1310,30 @@ export default function ScrollCanvas() {
                 <p
                   style={{
                     color: "#FFFFFF",
-                    fontSize: "clamp(4.5rem, 8vw, 7.5rem)",
+                    fontSize: "clamp(4.8rem, 9vw, 8rem)",
                     fontWeight: 900,
-                    lineHeight: 0.95,
-                    letterSpacing: "-0.04em",
+                    lineHeight: 0.9,
+                    letterSpacing: "-0.05em",
                     margin: 0,
+                    textShadow: "0 4px 24px rgba(0, 0, 0, 0.4), 0 0 48px rgba(6, 182, 212, 0.2)",
                   }}
                 >
                   100M+
                 </p>
                 <p
                   style={{
-                    color: "rgba(255,255,255,0.7)",
-                    fontSize: "1.2rem",
-                    fontWeight: 400,
-                    marginTop: "0.75rem",
-                    fontStyle: "italic",
+                    color: "rgba(255,255,255,0.85)",
+                    fontSize: "1.3rem",
+                    fontWeight: 500,
+                    marginTop: "0.85rem",
+                    textShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
                   }}
                 >
-                  living with stroke <span style={{ color: "#22d3ee", fontStyle: "italic" }}>consequences</span>
+                  living with stroke <span style={{
+                    color: "#06b6d4",
+                    fontWeight: 700,
+                    textShadow: "0 0 16px rgba(6, 182, 212, 0.6)",
+                  }}>consequences</span>
                 </p>
               </div>
             </div>
@@ -1114,20 +1368,47 @@ export default function ScrollCanvas() {
             fontFamily: "var(--font-geist-sans)",
           }}
         >
-          <h2
-            style={{
-              fontSize: "clamp(2.5rem, 5vw, 4rem)",
-              fontWeight: 800,
-              color: "#1e3a5f",
-              letterSpacing: "-0.03em",
-              lineHeight: 1.2,
-              margin: 0,
-              maxWidth: "600px",
-              textAlign: "center",
-            }}
-          >
-            What if there was a solution for this gap?
-          </h2>
+          <div style={{ position: "relative", maxWidth: "650px" }}>
+            <h2
+              style={{
+                fontSize: "clamp(2.8rem, 5.5vw, 4.5rem)",
+                fontWeight: 900,
+                background: "linear-gradient(135deg, #0c4a6e 0%, #1e3a8a 50%, #0e7490 100%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+                letterSpacing: "-0.04em",
+                lineHeight: 1.15,
+                margin: 0,
+                textAlign: "center",
+                minHeight: "2.3em",
+                position: "relative",
+                fontFamily: "'Courier New', Courier, monospace",
+              }}
+            >
+              {typewriterText}
+              {typewriterText && typewriterText.length < "What if there was a solution for this gap?".length && (
+                <span
+                  className="typewriter-cursor"
+                  style={{
+                    display: "inline-block",
+                    width: "3px",
+                    height: "0.9em",
+                    background: "linear-gradient(135deg, #0c4a6e 0%, #1e3a8a 50%, #0e7490 100%)",
+                    marginLeft: "4px",
+                    animation: "blink 0.7s step-end infinite",
+                    verticalAlign: "middle",
+                  }}
+                />
+              )}
+            </h2>
+            <style jsx>{`
+              @keyframes blink {
+                0%, 50% { opacity: 1; }
+                51%, 100% { opacity: 0; }
+              }
+            `}</style>
+          </div>
         </div>
       )}
 
@@ -1152,109 +1433,111 @@ export default function ScrollCanvas() {
           }}
         >
           {sectionTitle("The Solution")}
-          <div style={{ maxWidth: "540px" }}>
+          <div style={{ maxWidth: "560px" }}>
             {/* Main headline */}
-            <p
+            <h2
               style={{
-                fontSize: "clamp(1.6rem, 3vw, 2.2rem)",
-                fontWeight: 700,
-                color: "#0f172a",
-                lineHeight: 1.3,
-                margin: "0 0 2.5rem 0",
-                letterSpacing: "-0.02em",
+                fontSize: "clamp(2rem, 4vw, 2.8rem)",
+                fontWeight: 800,
+                background: "linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+                lineHeight: 1.15,
+                margin: "0 0 1.2rem 0",
+                letterSpacing: "-0.04em",
               }}
             >
-              Software-only post-stroke recovery monitoring platform
+              Software-only recovery monitoring from home
+            </h2>
+
+            {/* Subtitle */}
+            <p
+              style={{
+                fontSize: "clamp(1.05rem, 1.9vw, 1.35rem)",
+                fontWeight: 600,
+                color: "#334155",
+                lineHeight: 1.4,
+                margin: "0 0 2.8rem 0",
+                letterSpacing: "-0.01em",
+              }}
+            >
+              Short webcam tasks become objective movement data.
             </p>
 
             {/* Steps */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
-              {/* Step 1 - Patient */}
-              <div style={{ display: "flex", gap: "1rem", alignItems: "flex-start" }}>
-                <div
-                  style={{
-                    width: "36px",
-                    height: "36px",
-                    borderRadius: "50%",
-                    background: "#1e3a8a",
-                    color: "#ffffff",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "0.9rem",
-                    fontWeight: 700,
-                    flexShrink: 0,
-                  }}
-                >
-                  1
+            <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+              {[
+                { num: 1, title: "Home session", desc: "Patient completes a short task" },
+                { num: 2, title: "Computer vision", desc: "Movement is captured automatically" },
+                { num: 3, title: "Clinical dashboard", desc: "Clinicians see trends between visits" }
+              ].map((step) => (
+                <div key={step.num} style={{ display: "flex", gap: "1.1rem", alignItems: "flex-start" }}>
+                  <div
+                    style={{
+                      width: "42px",
+                      height: "42px",
+                      borderRadius: "50%",
+                      background: "linear-gradient(135deg, #1e3a8a 0%, #0e7490 100%)",
+                      color: "#ffffff",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: "1rem",
+                      fontWeight: 800,
+                      flexShrink: 0,
+                      boxShadow: "0 4px 16px rgba(30, 58, 138, 0.25), 0 0 24px rgba(6, 182, 212, 0.15)",
+                    }}
+                  >
+                    {step.num}
+                  </div>
+                  <div>
+                    <p style={{
+                      margin: 0,
+                      fontSize: "1.1rem",
+                      fontWeight: 800,
+                      background: "linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%)",
+                      WebkitBackgroundClip: "text",
+                      WebkitTextFillColor: "transparent",
+                      backgroundClip: "text",
+                    }}>
+                      {step.title}
+                    </p>
+                    <p style={{
+                      margin: "0.4rem 0 0 0",
+                      fontSize: "0.95rem",
+                      color: "#475569",
+                      lineHeight: 1.5,
+                      fontWeight: 500,
+                    }}>
+                      {step.desc}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p style={{ margin: 0, fontSize: "1rem", fontWeight: 700, color: "#0f172a" }}>
-                    Patient activity
-                  </p>
-                  <p style={{ margin: "0.3rem 0 0 0", fontSize: "0.9rem", color: "#475569", lineHeight: 1.5 }}>
-                    Patient completes a short rehab activity using only a regular webcam
-                  </p>
-                </div>
-              </div>
+              ))}
+            </div>
 
-              {/* Step 2 - Tracking */}
-              <div style={{ display: "flex", gap: "1rem", alignItems: "flex-start" }}>
-                <div
-                  style={{
-                    width: "36px",
-                    height: "36px",
-                    borderRadius: "50%",
-                    background: "#1e3a8a",
-                    color: "#ffffff",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "0.9rem",
-                    fontWeight: 700,
-                    flexShrink: 0,
-                  }}
-                >
-                  2
-                </div>
-                <div>
-                  <p style={{ margin: 0, fontSize: "1rem", fontWeight: 700, color: "#0f172a" }}>
-                    Movement tracking
-                  </p>
-                  <p style={{ margin: "0.3rem 0 0 0", fontSize: "0.9rem", color: "#475569", lineHeight: 1.5 }}>
-                    Computer vision captures motor performance
-                  </p>
-                </div>
-              </div>
-
-              {/* Step 3 - Dashboard */}
-              <div style={{ display: "flex", gap: "1rem", alignItems: "flex-start" }}>
-                <div
-                  style={{
-                    width: "36px",
-                    height: "36px",
-                    borderRadius: "50%",
-                    background: "#1e3a8a",
-                    color: "#ffffff",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "0.9rem",
-                    fontWeight: 700,
-                    flexShrink: 0,
-                  }}
-                >
-                  3
-                </div>
-                <div>
-                  <p style={{ margin: 0, fontSize: "1rem", fontWeight: 700, color: "#0f172a" }}>
-                    Clinical dashboard
-                  </p>
-                  <p style={{ margin: "0.3rem 0 0 0", fontSize: "0.9rem", color: "#475569", lineHeight: 1.5 }}>
-                    Clinicians receive objective recovery data
-                  </p>
-                </div>
-              </div>
+            {/* Footer note */}
+            <div
+              style={{
+                marginTop: "2.5rem",
+                paddingTop: "1.5rem",
+                borderTop: "2px solid transparent",
+                borderImage: "linear-gradient(90deg, rgba(6, 182, 212, 0.3) 0%, rgba(30, 58, 138, 0.15) 100%) 1",
+              }}
+            >
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: "0.9rem",
+                  color: "#64748b",
+                  lineHeight: 1.6,
+                  fontWeight: 600,
+                  letterSpacing: "0.005em",
+                }}
+              >
+                No wearables. No specialized hardware. Monitoring support, not diagnosis.
+              </p>
             </div>
 
           </div>
@@ -1281,46 +1564,129 @@ export default function ScrollCanvas() {
           }}
         >
           {sectionTitle("Clinical View")}
-          <div style={{ maxWidth: "420px" }}>
-            <p
+          <div style={{ maxWidth: "540px" }}>
+            {/* Main headline with gradient */}
+            <h2
               style={{
-                fontSize: "clamp(1.6rem, 3vw, 2.2rem)",
-                fontWeight: 700,
-                color: "#0f172a",
-                lineHeight: 1.3,
-                margin: "0 0 1.5rem 0",
-                letterSpacing: "-0.02em",
+                fontSize: "clamp(2.2rem, 4.5vw, 3.2rem)",
+                fontWeight: 800,
+                background: "linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+                lineHeight: 1.1,
+                margin: "0 0 1.2rem 0",
+                letterSpacing: "-0.04em",
               }}
             >
               Clinical dashboard
-            </p>
+            </h2>
 
-            <div style={{ display: "flex", gap: "1rem", alignItems: "flex-start", marginBottom: "1.2rem" }}>
-              <div
-                style={{
-                  width: "4px",
-                  height: "100%",
-                  minHeight: "40px",
-                  borderRadius: "2px",
-                  background: "#1e3a8a",
-                  flexShrink: 0,
-                }}
-              />
-              <p style={{ margin: 0, fontSize: "1.05rem", color: "#334155", lineHeight: 1.6 }}>
-                Clinicians receive recovery data
-              </p>
-            </div>
-
-            <div
+            {/* Subtitle with better color */}
+            <p
               style={{
-                background: "rgba(30, 58, 138, 0.06)",
-                borderRadius: "12px",
-                padding: "1rem 1.2rem",
-                borderLeft: "3px solid #1e3a8a",
+                fontSize: "clamp(1.1rem, 2vw, 1.35rem)",
+                fontWeight: 600,
+                color: "#334155",
+                lineHeight: 1.4,
+                margin: "0 0 2.8rem 0",
+                letterSpacing: "-0.01em",
               }}
             >
-              <p style={{ margin: 0, fontSize: "0.85rem", color: "#475569", lineHeight: 1.5 }}>
-                Not built to diagnose, built to give objective information between visits.
+              Prioritize follow-up. Monitor more patients. No extra workload.
+            </p>
+
+            {/* Floating chips with gradient backgrounds */}
+            <div
+              style={{
+                display: "flex",
+                gap: "0.85rem",
+                marginBottom: "2.5rem",
+                flexWrap: "wrap",
+              }}
+            >
+              {["Prioritize follow-up", "Monitor more patients", "No extra workload"].map((label, idx) => (
+                <div
+                  key={label}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "7px",
+                    background: `linear-gradient(135deg, rgba(6, 182, 212, ${0.12 - idx * 0.02}) 0%, rgba(14, 116, 144, ${0.08 - idx * 0.01}) 100%)`,
+                    border: "1.5px solid rgba(6, 182, 212, 0.25)",
+                    borderRadius: "999px",
+                    padding: "8px 16px",
+                    boxShadow: "0 2px 8px rgba(6, 182, 212, 0.1)",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: "6px",
+                      height: "6px",
+                      borderRadius: "50%",
+                      background: "linear-gradient(135deg, #06b6d4 0%, #0e7490 100%)",
+                      boxShadow: "0 0 8px rgba(6, 182, 212, 0.4)",
+                    }}
+                  />
+                  <span
+                    style={{
+                      fontSize: "0.85rem",
+                      fontWeight: 700,
+                      color: "#0c4a6e",
+                      letterSpacing: "0.005em",
+                    }}
+                  >
+                    {label}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            {/* Note card with premium glassmorphism */}
+            <div
+              style={{
+                background: "linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(240, 249, 255, 0.75) 100%)",
+                backdropFilter: "blur(20px)",
+                borderRadius: "20px",
+                padding: "1.5rem 1.75rem",
+                border: "1.5px solid rgba(30, 58, 138, 0.12)",
+                boxShadow: "0 8px 32px rgba(15, 23, 42, 0.08), 0 2px 8px rgba(6, 182, 212, 0.06)",
+                position: "relative",
+                overflow: "hidden",
+              }}
+            >
+              {/* Decorative gradient overlay */}
+              <div
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: "3px",
+                  background: "linear-gradient(90deg, #06b6d4 0%, #1e3a8a 100%)",
+                  opacity: 0.6,
+                }}
+              />
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: "0.95rem",
+                  color: "#475569",
+                  lineHeight: 1.7,
+                  fontWeight: 500,
+                }}
+              >
+                <strong style={{
+                  background: "linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                  fontWeight: 800,
+                }}>
+                  Not built to diagnose or replace clinical judgment.
+                </strong>
+                <br />
+                Built to give clinicians objective information between visits.
               </p>
             </div>
           </div>
@@ -1340,6 +1706,7 @@ export default function ScrollCanvas() {
             display: "flex",
             flexDirection: "column",
             justifyContent: "space-between",
+            alignItems: "center",
             padding: "3rem",
             opacity: 0,
             pointerEvents: "none",
@@ -1348,37 +1715,53 @@ export default function ScrollCanvas() {
           }}
         >
           {sectionTitle("Expansion")}
-          <p
-            style={{
-              fontSize: "clamp(1.6rem, 3vw, 2.2rem)",
-              fontWeight: 700,
-              color: "#0f172a",
-              lineHeight: 1.3,
-              margin: 0,
-              marginTop: "42vh",
-              letterSpacing: "-0.02em",
-            }}
-          >
-            B2B SaaS
-          </p>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "1.5rem" }}>
-            <div style={{ textAlign: "center" }}>
-              <p style={{ margin: 0, fontSize: "clamp(1.1rem, 2vw, 1.5rem)", fontWeight: 700, color: "#0f172a" }}>
-                Clinical Validation
-              </p>
-            </div>
-            <span style={{ fontSize: "1.8rem", color: "#1e3a8a", fontWeight: 700 }}>→</span>
-            <div style={{ textAlign: "center" }}>
-              <p style={{ margin: 0, fontSize: "clamp(1.1rem, 2vw, 1.5rem)", fontWeight: 700, color: "#0f172a" }}>
-                Commercial Adoption
-              </p>
-            </div>
-            <span style={{ fontSize: "1.8rem", color: "#1e3a8a", fontWeight: 700 }}>→</span>
-            <div style={{ textAlign: "center" }}>
-              <p style={{ margin: 0, fontSize: "clamp(1.1rem, 2vw, 1.5rem)", fontWeight: 700, color: "#0f172a" }}>
-                Scale
-              </p>
-            </div>
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "2rem",
+            flexWrap: "wrap",
+            width: "100%",
+            maxWidth: "1200px",
+          }}>
+            {["Clinical Validation", "Commercial Adoption", "Scale"].map((stage, idx, arr) => (
+              <div key={stage} style={{ display: "flex", alignItems: "center", gap: "2rem" }}>
+                <div
+                  style={{
+                    textAlign: "center",
+                    background: "linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(240, 249, 255, 0.75) 100%)",
+                    backdropFilter: "blur(15px)",
+                    padding: "1.2rem 2rem",
+                    borderRadius: "16px",
+                    border: "2px solid rgba(30, 58, 138, 0.15)",
+                    boxShadow: "0 8px 24px rgba(15, 23, 42, 0.1)",
+                  }}
+                >
+                  <p style={{
+                    margin: 0,
+                    fontSize: "clamp(1.2rem, 2.2vw, 1.7rem)",
+                    fontWeight: 800,
+                    background: "linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    backgroundClip: "text",
+                    letterSpacing: "-0.02em",
+                  }}>
+                    {stage}
+                  </p>
+                </div>
+                {idx < arr.length - 1 && (
+                  <span style={{
+                    fontSize: "2.5rem",
+                    fontWeight: 800,
+                    background: "linear-gradient(135deg, #06b6d4 0%, #1e3a8a 100%)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    backgroundClip: "text",
+                  }}>→</span>
+                )}
+              </div>
+            ))}
           </div>
         </div>
       )}
@@ -1403,37 +1786,68 @@ export default function ScrollCanvas() {
             fontFamily: "var(--font-geist-sans)",
           }}
         >
-          <p
+          <h2
             style={{
-              fontSize: "clamp(1.6rem, 3vw, 2.2rem)",
-              fontWeight: 700,
-              color: "#000000",
-              lineHeight: 1.3,
+              fontSize: "clamp(1.8rem, 3.5vw, 2.6rem)",
+              fontWeight: 800,
+              background: "linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+              lineHeight: 1.2,
               margin: 0,
-              letterSpacing: "-0.02em",
+              letterSpacing: "-0.03em",
             }}
           >
             From Idea to Clinical Validation
-          </p>
+          </h2>
           <div style={{ textAlign: "center" }}>
-            <p
+            <div
               style={{
-                fontSize: "clamp(1.5rem, 3vw, 2.2rem)",
-                fontWeight: 700,
-                color: "#000000",
-                margin: "0 0 1rem 0",
-                letterSpacing: "-0.02em",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "10px",
+                background: "linear-gradient(135deg, rgba(6, 182, 212, 0.12) 0%, rgba(30, 58, 138, 0.08) 100%)",
+                backdropFilter: "blur(10px)",
+                border: "2px solid rgba(6, 182, 212, 0.25)",
+                borderRadius: "999px",
+                padding: "12px 28px",
+                marginBottom: "1.5rem",
+                boxShadow: "0 4px 20px rgba(6, 182, 212, 0.15)",
               }}
             >
-              5+ strategic supporters
-            </p>
+              <div
+                style={{
+                  width: "8px",
+                  height: "8px",
+                  borderRadius: "50%",
+                  background: "linear-gradient(135deg, #06b6d4 0%, #1e3a8a 100%)",
+                  boxShadow: "0 0 12px rgba(6, 182, 212, 0.6)",
+                }}
+              />
+              <p
+                style={{
+                  fontSize: "clamp(1.8rem, 3.5vw, 2.6rem)",
+                  fontWeight: 800,
+                  background: "linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                  margin: 0,
+                  letterSpacing: "-0.03em",
+                }}
+              >
+                5+ strategic supporters
+              </p>
+            </div>
             <p
               style={{
-                fontSize: "clamp(0.95rem, 1.6vw, 1.2rem)",
-                color: "#000000",
+                fontSize: "clamp(1rem, 1.8vw, 1.35rem)",
+                color: "#334155",
                 margin: 0,
-                lineHeight: 1.8,
-                fontWeight: 500,
+                lineHeight: 1.9,
+                fontWeight: 600,
+                letterSpacing: "0.01em",
               }}
             >
               AWS Spain &middot; Saturno Labs &middot; Bosch &middot; RCC Harvard &middot; Hospital Gregorio Mara&ntilde;&oacute;n &middot; Hospital La Paz &middot; and others
