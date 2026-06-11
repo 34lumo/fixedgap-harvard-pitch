@@ -6,6 +6,23 @@ import Problem2Overlay from "./Problem2Overlay";
 const TOTAL_FRAMES = 759;
 const BATCH_SIZE = 20;
 
+// Estilo del título — mismo para todas las secciones:
+const sectionTitle = (title: string, color: string = '#000000') => (
+  <p style={{
+    position: 'absolute',
+    top: '32px',
+    left: '48px',
+    color,
+    fontSize: '18px',
+    fontWeight: 700,
+    letterSpacing: '0.15em',
+    textTransform: 'uppercase',
+    margin: 0,
+  }}>
+    {title}
+  </p>
+);
+
 interface Section {
   startFrame: number;
   endFrame: number;
@@ -982,6 +999,7 @@ export default function ScrollCanvas() {
             fontFamily: "var(--font-geist-sans)",
           }}
         >
+            {sectionTitle("The Problem", "rgba(255,255,255,0.85)")}
             {/* Badge pill */}
             <div
               style={{
@@ -1133,6 +1151,7 @@ export default function ScrollCanvas() {
             fontFamily: "var(--font-geist-sans)",
           }}
         >
+          {sectionTitle("The Solution")}
           <div style={{ maxWidth: "540px" }}>
             {/* Main headline */}
             <p
@@ -1261,6 +1280,7 @@ export default function ScrollCanvas() {
             fontFamily: "var(--font-geist-sans)",
           }}
         >
+          {sectionTitle("Clinical View")}
           <div style={{ maxWidth: "420px" }}>
             <p
               style={{
@@ -1327,6 +1347,7 @@ export default function ScrollCanvas() {
             fontFamily: "var(--font-geist-sans)",
           }}
         >
+          {sectionTitle("Expansion")}
           <p
             style={{
               fontSize: "clamp(1.6rem, 3vw, 2.2rem)",
@@ -1334,6 +1355,7 @@ export default function ScrollCanvas() {
               color: "#0f172a",
               lineHeight: 1.3,
               margin: 0,
+              marginTop: "42vh",
               letterSpacing: "-0.02em",
             }}
           >

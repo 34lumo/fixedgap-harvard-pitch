@@ -29,6 +29,19 @@ const Problem2Overlay = forwardRef<HTMLDivElement, Props>(function Problem2Overl
         ...style,
       }}
     >
+      <p style={{
+        position: 'absolute',
+        top: '32px',
+        left: '48px',
+        color: 'rgba(255,255,255,0.85)',
+        fontSize: '18px',
+        fontWeight: 700,
+        letterSpacing: '0.15em',
+        textTransform: 'uppercase',
+        margin: 0,
+      }}>
+        The Problem
+      </p>
       <div
         style={{
           width: "min(88vw, 850px)",
