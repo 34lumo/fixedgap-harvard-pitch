@@ -152,9 +152,6 @@ export default function ScrollCanvas() {
   const [hasAnimatedAsk, setHasAnimatedAsk] = useState(false);
   const [typewriterText, setTypewriterText] = useState("");
   const [hasAnimatedTypewriter, setHasAnimatedTypewriter] = useState(false);
-  const [debugScrollY, setDebugScrollY] = useState(0);
-  const [currentFrame, setCurrentFrame] = useState(0);
-  const [scrollProgress, setScrollProgress] = useState(0);
 
   const snapFrames = [1, 95, 225, 350, 483, 616, 720];
 
@@ -338,18 +335,6 @@ export default function ScrollCanvas() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [hasAnimatedAsk]);
 
-  // Update debug scroll Y for debugger
-  useEffect(() => {
-    const updateDebugScroll = () => {
-      setDebugScrollY(window.scrollY);
-    };
-
-    window.addEventListener('scroll', updateDebugScroll);
-    updateDebugScroll(); // Initial value
-
-    return () => window.removeEventListener('scroll', updateDebugScroll);
-  }, []);
-
   // Scroll lock system
   useEffect(() => {
     if (!loaded) return;
@@ -420,10 +405,6 @@ export default function ScrollCanvas() {
 
       const progress = scrollProgressRef.current;
       const frameIdx = Math.min(TOTAL_FRAMES - 1, Math.max(0, Math.floor(progress * (TOTAL_FRAMES - 1))));
-
-      // Update debugger states
-      setCurrentFrame(frameIdx);
-      setScrollProgress(progress);
 
       // Buscar si hay una imagen HQ para este frame (±15 frames de cualquier snap frame)
       let frame = framesRef.current[frameIdx];
@@ -698,69 +679,6 @@ export default function ScrollCanvas() {
           zIndex: 0,
         }}
       />
-
-      {/* Frame Debugger */}
-      {loaded && (
-        <div
-          style={{
-            position: "fixed",
-            top: "16px",
-            right: "16px",
-            zIndex: 9999,
-            background: "rgba(0, 0, 0, 0.85)",
-            backdropFilter: "blur(10px)",
-            color: "#00ff00",
-            padding: "12px 16px",
-            borderRadius: "8px",
-            fontFamily: "monospace",
-            fontSize: "13px",
-            lineHeight: "1.6",
-            border: "1px solid rgba(0, 255, 0, 0.3)",
-            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.5)",
-            minWidth: "200px",
-          }}
-        >
-          <div style={{ color: "#00ff00", fontWeight: "bold", marginBottom: "8px", fontSize: "14px" }}>
-            🔧 FRAME DEBUGGER
-          </div>
-          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
-            <span style={{ color: "#888" }}>Current Frame:</span>
-            <span style={{ color: "#00ff00", fontWeight: "bold" }}>{currentFrame}</span>
-          </div>
-          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
-            <span style={{ color: "#888" }}>Progress:</span>
-            <span style={{ color: "#00ffff" }}>{(scrollProgress * 100).toFixed(2)}%</span>
-          </div>
-          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
-            <span style={{ color: "#888" }}>Scroll Y:</span>
-            <span style={{ color: "#ff00ff" }}>{Math.round(debugScrollY)}px</span>
-          </div>
-          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
-            <span style={{ color: "#888" }}>Loaded:</span>
-            <span style={{ color: "#ffff00" }}>{loadedCount}/{TOTAL_FRAMES}</span>
-          </div>
-          <div style={{ borderTop: "1px solid rgba(255, 255, 255, 0.2)", paddingTop: "8px", marginTop: "4px" }}>
-            <div style={{ color: "#888", fontSize: "11px", marginBottom: "4px" }}>Snap Frames:</div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
-              {snapFrames.map((frame) => (
-                <span
-                  key={frame}
-                  style={{
-                    padding: "2px 6px",
-                    borderRadius: "4px",
-                    fontSize: "10px",
-                    background: currentFrame === frame ? "#00ff00" : "rgba(255, 255, 255, 0.1)",
-                    color: currentFrame === frame ? "#000" : "#fff",
-                    fontWeight: currentFrame === frame ? "bold" : "normal",
-                  }}
-                >
-                  {frame}
-                </span>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Scroll height container with snap points */}
       <div style={{ height: "30471px", position: "relative" }}>
