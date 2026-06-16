@@ -47,7 +47,7 @@ const Problem2Overlay = forwardRef<HTMLDivElement, Props>(function Problem2Overl
         style={{
           width: "min(88vw, 900px)",
           padding: "3rem 3.5rem",
-          background: "linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(240, 249, 255, 0.92) 100%)",
+          background: "linear-gradient(135deg, rgb(255, 255, 255) 0%, rgb(240, 249, 255) 100%)",
           backdropFilter: "blur(20px)",
           borderRadius: "24px",
           border: "2px solid rgba(30, 58, 138, 0.15)",
